@@ -4,7 +4,6 @@ const URLS_TO_CACHE = [
   '/index.html',
   '/manifest.json',
   '/icon.svg',
-  '/icon2.svg',
   '/icon3.svg'
   // Other assets like JS, CSS from esm.sh will be cached dynamically.
 ];
