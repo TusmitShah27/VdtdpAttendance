@@ -1,7 +1,7 @@
 import React, { useState, useMemo } from 'react';
 import { Member, AttendanceRecord, AttendanceStatus } from '../../types';
 import { Icon } from './Icon';
-import { generatePerformanceRemark } from '../services/geminiService';
+// import { generatePerformanceRemark } from '../services/geminiService';
 
 interface MemberDetailsProps {
   member: Member;
@@ -19,8 +19,8 @@ const StatusIndicator: React.FC<{ status: AttendanceStatus }> = ({ status }) => 
 };
 
 export const MemberDetails: React.FC<MemberDetailsProps> = ({ member, attendance, onUpdateMember }) => {
-  const [remark, setRemark] = useState('');
-  const [isLoadingRemark, setIsLoadingRemark] = useState(false);
+  // const [remark, setRemark] = useState('');
+  // const [isLoadingRemark, setIsLoadingRemark] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [editedName, setEditedName] = useState(member.name);
@@ -79,14 +79,14 @@ export const MemberDetails: React.FC<MemberDetailsProps> = ({ member, attendance
     return records;
   }, [attendance, member.createdAt]);
 
-  const handleGenerateRemark = async () => {
-    setIsLoadingRemark(true);
-    setRemark('');
-    const summaryText = `Total days tracked: ${augmentedAttendance.length}. Present: ${summary.present}, Absent: ${summary.absent}, Half Day: ${summary.halfday}.`;
-    const generatedRemark = await generatePerformanceRemark(member.name, summaryText);
-    setRemark(generatedRemark);
-    setIsLoadingRemark(false);
-  };
+  // const handleGenerateRemark = async () => {
+  //   setIsLoadingRemark(true);
+  //   setRemark('');
+  //   const summaryText = `Total days tracked: ${augmentedAttendance.length}. Present: ${summary.present}, Absent: ${summary.absent}, Half Day: ${summary.halfday}.`;
+  //   const generatedRemark = await generatePerformanceRemark(member.name, summaryText);
+  //   setRemark(generatedRemark);
+  //   setIsLoadingRemark(false);
+  // };
 
   const handleSave = async () => {
     if (!editedName.trim() || !editedInstrument.trim()) return;
