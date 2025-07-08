@@ -1,70 +1,47 @@
 const CACHE_NAME = 'vakratund-attendance-cache-v1';
 const URLS_TO_CACHE = [
-  '/',
-  '/index.html',
-  '/manifest.json',
-  '/icon.svg',
-  '/icon3.svg'
-  // Other assets like JS, CSS from esm.sh will be cached dynamically.
+  '/VdtdpAttendance/',
+  '/VdtdpAttendance/index.html',
+  '/VdtdpAttendance/manifest.json',
+  '/VdtdpAttendance/icon.svg',
+  '/VdtdpAttendance/icon3.svg'
+  // Add more assets as needed
 ];
 
 self.addEventListener('install', event => {
   event.waitUntil(
     caches.open(CACHE_NAME)
-      .then(cache => {
-        console.log('Opened cache');
-        return cache.addAll(URLS_TO_CACHE);
-      })
+      .then(cache => cache.addAll(URLS_TO_CACHE))
   );
 });
 
 self.addEventListener('fetch', event => {
   event.respondWith(
     caches.match(event.request)
-      .then(response => {
-        // Cache hit - return response
-        if (response) {
-          return response;
+      .then(response => response || fetch(event.request).then(fetchResponse => {
+        if (!fetchResponse || fetchResponse.status !== 200 || (fetchResponse.type !== 'basic' && fetchResponse.type !== 'cors')) {
+          return fetchResponse;
         }
-
-        const fetchRequest = event.request.clone();
-
-        return fetch(fetchRequest).then(
-          response => {
-            // Check if we received a valid response
-            if (!response || response.status !== 200 || (response.type !== 'basic' && response.type !== 'cors')) {
-              return response;
-            }
-
-            const responseToCache = response.clone();
-
-            caches.open(CACHE_NAME)
-              .then(cache => {
-                // We only cache GET requests
-                if(event.request.method === 'GET') {
-                    cache.put(event.request, responseToCache);
-                }
-              });
-
-            return response;
-          }
-        );
-      })
+        const responseToCache = fetchResponse.clone();
+        if(event.request.method === 'GET') {
+          caches.open(CACHE_NAME).then(cache => cache.put(event.request, responseToCache));
+        }
+        return fetchResponse;
+      }))
   );
 });
-
 
 self.addEventListener('activate', event => {
   const cacheWhitelist = [CACHE_NAME];
   event.waitUntil(
-    caches.keys().then(cacheNames => {
-      return Promise.all(
+    caches.keys().then(cacheNames =>
+      Promise.all(
         cacheNames.map(cacheName => {
-          if (cacheWhitelist.indexOf(cacheName) === -1) {
+          if (!cacheWhitelist.includes(cacheName)) {
             return caches.delete(cacheName);
           }
         })
-      );
-    })
+      )
+    )
   );
 });
