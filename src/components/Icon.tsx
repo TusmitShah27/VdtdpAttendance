@@ -1,5 +1,4 @@
 import React from 'react';
-// import logo from ''
 
 interface IconProps {
   type: 'dashboard' | 'attendance' | 'add' | 'member' | 'back' | 'check' | 'close' | 'halfday' | 'logout' | 'appLogo' | 'addMemberIllustration' | 'search' | 'spinner' | 'download' | 'edit' | 'save';
@@ -18,7 +17,7 @@ const ICONS: Record<IconProps['type'], React.ReactNode> = {
     </svg>
   ),
   appLogo: (
-    <img src="" alt="Vakratund Logo" className="w-full h-full object-cover"/>
+    <img src="/logo.jpeg" alt="Vakratund Logo" className="w-full h-full object-cover"/>
   ),
   addMemberIllustration: (
     <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1} stroke="currentColor">
