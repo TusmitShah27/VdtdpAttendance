@@ -1,6 +1,6 @@
 {
-  "short_name": "Vakratund",
-  "name": "Vakratund Attendance",
+  "short_name": "Vakratunda",
+  "name": "Vakratunda Attendance",
   "description": "A mobile-first web application to manage member attendance.",
   "icons": [
     {
@@ -29,8 +29,9 @@
       "form_factor": "wide"
     }
   ],
-  "id": "/?source=pwa",
-  "start_url": "/?source=pwa",
+  "id": "/VdtdpAttendance/?source=pwa",
+  "start_url": "/VdtdpAttendance/?source=pwa",
+  "scope": "/VdtdpAttendance/",
   "display": "standalone",
   "theme_color": "#f97316",
   "background_color": "#0c0a09"
