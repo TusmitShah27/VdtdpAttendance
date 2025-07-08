@@ -122,7 +122,7 @@ export const MemberDetails: React.FC<MemberDetailsProps> = ({ member, attendance
         </div>
       </div>
       
-      <div className="bg-stone-900 p-4 rounded-lg shadow-md mb-6">
+      {/* <div className="bg-stone-900 p-4 rounded-lg shadow-md mb-6">
         <div className="flex justify-between items-center mb-3">
             <h3 className="text-lg font-semibold text-stone-100">AI Performance Remark</h3>
             <button onClick={handleGenerateRemark} disabled={isLoadingRemark} className="text-sm bg-orange-600 text-white px-3 py-1 rounded-md hover:bg-orange-700 disabled:bg-stone-700 disabled:cursor-wait transition-colors">
@@ -131,7 +131,7 @@ export const MemberDetails: React.FC<MemberDetailsProps> = ({ member, attendance
         </div>
         {isLoadingRemark && <div className="text-center text-stone-400">Analyzing data with Gemini...</div>}
         {remark && <p className="text-stone-300 bg-stone-800 p-3 rounded-md italic">"{remark}"</p>}
-      </div>
+      </div> */}
 
       <div className="bg-stone-900 p-4 rounded-lg shadow-md mb-6">
         <div className="flex justify-between items-center">
