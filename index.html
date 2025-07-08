@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="./icon.svg" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+    <!-- PWA Meta Tags -->
+    <link rel="manifest" href="/assets/manifest-CAr4j95d.json" />
+    <meta name="theme-color" content="#f97316" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="apple-mobile-web-app-title" content="Vakratund" />
+    <link rel="apple-touch-icon" href="./icon.svg" />
+
+    <title>Vakratund Attendance</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+      /* Custom scrollbar styles */
+      ::-webkit-scrollbar {
+        width: 6px;
+        height: 6px;
+      }
+      ::-webkit-scrollbar-track {
+        background: #0c0a09;
+      }
+      ::-webkit-scrollbar-thumb {
+        background: #44403c;
+        border-radius: 3px;
+      }
+      ::-webkit-scrollbar-thumb:hover {
+        background: #57534e;
+      }
+      .animate-spin {
+        animation: spin 1s linear infinite;
+      }
+      @keyframes spin {
+        from {
+          transform: rotate(0deg);
+        }
+        to {
+          transform: rotate(360deg);
+        }
+      }
+    </style>
+
+    <!-- Import map stays as-is -->
+
+    <script type="importmap">
+      {
+        "imports": {
+          "react-dom/": "https://esm.sh/react-dom@^19.1.0/",
+          "react/": "https://esm.sh/react@^19.1.0/",
+          "react": "https://esm.sh/react@^19.1.0",
+          "@google/genai": "https://esm.sh/@google/genai@^1.8.0",
+          "recharts": "https://esm.sh/recharts@^3.0.2",
+          "firebase/compat/app": "https://esm.sh/firebase@10.12.2/compat/app",
+          "firebase/compat/auth": "https://esm.sh/firebase@10.12.2/compat/auth",
+          "firebase/compat/firestore": "https://esm.sh/firebase@10.12.2/compat/firestore",
+          "firebase/": "https://esm.sh/firebase@^11.10.0/"
+        }
+      }
+    </script>
+    <script type="module" crossorigin src="/assets/index-BcHHQY9l.js"></script>
+  </head>
+  <body class="bg-stone-950 text-stone-100">
+    <div id="root"></div>
+    <!-- Vite will inject the correct JS automatically on build -->
+  </body>
+</html>
+
