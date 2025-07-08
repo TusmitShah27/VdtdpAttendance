@@ -10,12 +10,6 @@
       "purpose": "any"
     },
     {
-      "src": "/icon2.svg",
-      "sizes": "144x144",
-      "type": "image/svg+xml",
-      "purpose": "any"
-    },
-    {
       "src": "/icon.svg",
       "sizes": "510x510",
       "type": "image/svg+xml",
