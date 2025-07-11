@@ -16,7 +16,7 @@ interface DashboardProps {
   onSelectMember: (memberId: string) => void;
   loading: boolean;
   onGenerateReport: (days: number) => string;
-  installPromptEvent: any;
+  installPromptEvent?: any;
   onInstall: () => void;
 }
 

@@ -73,8 +73,9 @@ export default function App() {
             onLogout={handleLogout}
             members={members}
             onSelectMember={handleSelectMember}
-            onGenerateReport={generateCsvReport}
-          />
+            onGenerateReport={generateCsvReport} onInstall={function (): void {
+              throw new Error('Function not implemented.');
+            } }          />
         );
       case View.Attendance:
         const today = getTodayDateString();
