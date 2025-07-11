@@ -21,9 +21,10 @@ export default function App() {
   const [selectedMemberId, setSelectedMemberId] = useState<string | null>(null);
   
   const {
-    members,
+   members,
     loading,
     addMember,
+    addMultipleMembers,
     updateMember,
     markBatchAttendance,
     getMemberById,
@@ -86,7 +87,7 @@ export default function App() {
         }, {} as Record<string, AttendanceStatus>);
         return <DailyAttendance members={members} todaysAttendance={todaysAttendanceForScreen} onSave={markBatchAttendance} />;
       case View.AddMember:
-        return <AddMemberForm onAddMember={addMember} onDone={() => handleSetView(View.Dashboard)} />;
+        return <AddMemberForm onAddMember={addMember} addMultipleMembers={addMultipleMembers} onDone={() => handleSetView(View.Dashboard)} />;
       case View.MemberDetails:
         if (selectedMemberId) {
           const member = getMemberById(selectedMemberId);

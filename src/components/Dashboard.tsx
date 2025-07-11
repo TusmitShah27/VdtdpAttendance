@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import { Icon } from './Icon';
 import { AttendanceStatus, Member } from '../../types';
@@ -16,6 +16,8 @@ interface DashboardProps {
   onSelectMember: (memberId: string) => void;
   loading: boolean;
   onGenerateReport: (days: number) => string;
+  installPromptEvent: any;
+  onInstall: () => void;
 }
 
 const StatCard: React.FC<{ title: string; value: string | number; iconType: 'check' | 'close' | 'halfday' | 'member'; color: string }> = ({ title, value, iconType, color }) => (
@@ -30,10 +32,14 @@ const StatCard: React.FC<{ title: string; value: string | number; iconType: 'che
   </div>
 );
 
-export const Dashboard: React.FC<DashboardProps> = ({ todaySummary, weeklySummary, onLogout, members, onSelectMember, loading, onGenerateReport }) => {
+export const Dashboard: React.FC<DashboardProps> = ({ todaySummary, weeklySummary, onLogout, members, onSelectMember, loading, onGenerateReport, installPromptEvent, onInstall }) => {
   const [searchTerm, setSearchTerm] = useState('');
 
-  const filteredMembers = members.filter(member =>
+  const sortedMembers = useMemo(() => {
+    return [...members].sort((a, b) => a.name.localeCompare(b.name));
+  }, [members]);
+
+  const filteredMembers = sortedMembers.filter(member =>
     member.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
     member.instrument.toLowerCase().includes(searchTerm.toLowerCase())
   );
@@ -113,6 +119,22 @@ export const Dashboard: React.FC<DashboardProps> = ({ todaySummary, weeklySummar
           </ResponsiveContainer>
         </div>
       </div>
+
+      {installPromptEvent && (
+        <div>
+          <h3 className="text-xl font-bold text-stone-100 mb-4">Install App</h3>
+          <div className="bg-stone-900 p-4 rounded-lg shadow-md">
+            <button
+              onClick={onInstall}
+              className="w-full flex items-center justify-center gap-2 bg-orange-600 hover:bg-orange-700 text-white font-semibold py-3 px-4 rounded-lg transition-colors duration-200"
+            >
+              <Icon type="download" className="w-5 h-5" />
+              Install Vakratund App
+            </button>
+            <p className="text-xs text-stone-400 mt-3 text-center">Install the app for quick access from your home screen and offline use.</p>
+          </div>
+        </div>
+      )}
 
       <div>
         <h3 className="text-xl font-bold text-stone-100 mb-4">Reports</h3>

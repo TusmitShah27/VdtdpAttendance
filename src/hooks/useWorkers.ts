@@ -85,6 +85,21 @@ export const useMembers = () => {
       createdAt: firebase.firestore.FieldValue.serverTimestamp(),
     });
   }, []);
+
+  const addMultipleMembers = useCallback(async (newMembers: {name: string, instrument: string}[]) => {
+    const batch = db.batch();
+    const membersColRef = db.collection('members');
+
+    newMembers.forEach(member => {
+        const newDocRef = membersColRef.doc();
+        batch.set(newDocRef, {
+            ...member,
+            createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+        });
+    });
+
+    await batch.commit();
+  }, []);
   
   const updateMember = useCallback(async (memberId: string, name: string, instrument: string) => {
     const memberRef = db.collection('members').doc(memberId);
@@ -208,6 +223,7 @@ export const useMembers = () => {
     members,
     attendance,
     addMember,
+    addMultipleMembers,
     updateMember,
     markBatchAttendance,
     getMemberById,
