@@ -19,20 +19,53 @@ export default function App() {
   const [user, setUser] = useState<firebase.User | null>();
   const [currentView, setCurrentView] = useState<View>(View.Dashboard);
   const [selectedMemberId, setSelectedMemberId] = useState<string | null>(null);
+  const [installPromptEvent, setInstallPromptEvent] = useState<any>(null);
   
   const {
-   members,
+    members,
     loading,
+    attendance,
     addMember,
     addMultipleMembers,
     updateMember,
-    markBatchAttendance,
+    markAttendanceForDate,
     getMemberById,
     getAttendanceByMember,
     getWeeklySummary,
     getTodaySummary,
     generateCsvReport,
   } = useMembers();
+
+  useEffect(() => {
+    // PWA install prompt logic
+    const handleBeforeInstallPrompt = (e: Event) => {
+      e.preventDefault();
+      setInstallPromptEvent(e);
+    };
+    window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
+
+    const handleAppInstalled = () => {
+      setInstallPromptEvent(null);
+      console.log('PWA was installed');
+    };
+    window.addEventListener('appinstalled', handleAppInstalled);
+
+    // Register service worker
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('./sw.js').then(registration => {
+          console.log('SW registered: ', registration);
+        }).catch(registrationError => {
+          console.log('SW registration failed: ', registrationError);
+        });
+      });
+    }
+
+    return () => {
+      window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
+      window.removeEventListener('appinstalled', handleAppInstalled);
+    };
+  }, []);
 
   useEffect(() => {
     const unsubscribe = auth.onAuthStateChanged((currentUser) => {
@@ -62,6 +95,17 @@ export default function App() {
     handleSetView(View.Dashboard);
   }
 
+  const handleInstallPrompt = async () => {
+    if (!installPromptEvent) {
+      return;
+    }
+    installPromptEvent.prompt();
+    const { outcome } = await installPromptEvent.userChoice;
+    console.log(`User response to the install prompt: ${outcome}`);
+    // We've used the prompt, and can't use it again, so clear it.
+    setInstallPromptEvent(null);
+  };
+
   const renderView = () => {
     switch (currentView) {
       case View.Dashboard:
@@ -73,20 +117,17 @@ export default function App() {
             onLogout={handleLogout}
             members={members}
             onSelectMember={handleSelectMember}
-            onGenerateReport={generateCsvReport} onInstall={function (): void {
-              throw new Error('Function not implemented.');
-            } }          />
+            onGenerateReport={generateCsvReport}
+            installPromptEvent={installPromptEvent}
+            onInstall={handleInstallPrompt}
+          />
         );
       case View.Attendance:
-        const today = getTodayDateString();
-        const todaysAttendanceForScreen = members.reduce((acc, member) => {
-            const status = getAttendanceByMember(member.id)[today];
-            if(status) {
-                acc[member.id] = status;
-            }
-            return acc;
-        }, {} as Record<string, AttendanceStatus>);
-        return <DailyAttendance members={members} todaysAttendance={todaysAttendanceForScreen} onSave={markBatchAttendance} />;
+        return <DailyAttendance 
+            members={members} 
+            attendance={attendance} 
+            onSave={markAttendanceForDate} 
+        />;
       case View.AddMember:
         return <AddMemberForm onAddMember={addMember} addMultipleMembers={addMultipleMembers} onDone={() => handleSetView(View.Dashboard)} />;
       case View.MemberDetails:
@@ -127,7 +168,7 @@ export default function App() {
         const member = selectedMemberId ? getMemberById(selectedMemberId) : null;
         return member?.name || "Member Details";
       default:
-        return "Vakratunda Attendance";
+        return "Vakratund Attendance";
     }
   }
 

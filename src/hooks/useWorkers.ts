@@ -85,7 +85,7 @@ export const useMembers = () => {
       createdAt: firebase.firestore.FieldValue.serverTimestamp(),
     });
   }, []);
-
+  
   const addMultipleMembers = useCallback(async (newMembers: {name: string, instrument: string}[]) => {
     const batch = db.batch();
     const membersColRef = db.collection('members');
@@ -100,24 +100,23 @@ export const useMembers = () => {
 
     await batch.commit();
   }, []);
-  
+
   const updateMember = useCallback(async (memberId: string, name: string, instrument: string) => {
     const memberRef = db.collection('members').doc(memberId);
     await memberRef.update({ name, instrument });
   }, []);
 
-  const markBatchAttendance = useCallback(async (statuses: Record<string, AttendanceStatus>) => {
-    const today = getTodayDateString();
+  const markAttendanceForDate = useCallback(async (statuses: Record<string, AttendanceStatus>, date: string) => {
     const attendanceColRef = db.collection('attendance');
     const batch = db.batch();
     
     const promises = Object.entries(statuses).map(async ([memberId, status]) => {
-        const q = attendanceColRef.where('memberId', '==', memberId).where('date', '==', today);
+        const q = attendanceColRef.where('memberId', '==', memberId).where('date', '==', date);
         const querySnapshot = await q.get();
 
         if (querySnapshot.empty) {
             const newDocRef = attendanceColRef.doc(); // Creates a new doc reference with a random ID
-            batch.set(newDocRef, { memberId, date: today, status });
+            batch.set(newDocRef, { memberId, date: date, status });
         } else {
             const docRef = querySnapshot.docs[0].ref;
             batch.update(docRef, { status });
@@ -225,7 +224,7 @@ export const useMembers = () => {
     addMember,
     addMultipleMembers,
     updateMember,
-    markBatchAttendance,
+    markAttendanceForDate,
     getMemberById,
     getAttendanceByMember,
     getWeeklySummary,

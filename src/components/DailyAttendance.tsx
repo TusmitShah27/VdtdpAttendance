@@ -1,20 +1,62 @@
-import React, { useState, useMemo } from 'react';
-import { Member, AttendanceStatus } from '../../types';
+import React, { useState, useMemo, useEffect, useRef } from 'react';
+import { Member, AttendanceStatus, AttendanceData } from '../../types';
 import { Icon } from './Icon';
+
+// Helper functions for date manipulation
+const getWeekStartDate = (date: Date) => {
+  const d = new Date(date);
+  const day = d.getDay();
+  // Adjust so that Monday is the first day of the week (day 1)
+  const diff = d.getDate() - day + (day === 0 ? -6 : 1);
+  return new Date(d.setDate(diff));
+};
+
+const addDays = (date: Date, days: number): Date => {
+  const result = new Date(date);
+  result.setDate(result.getDate() + days);
+  return result;
+};
 
 export const DailyAttendance: React.FC<{
   members: Member[];
-  todaysAttendance: Record<string, AttendanceStatus>;
-  onSave: (statuses: Record<string, AttendanceStatus>) => void;
-}> = ({ members, todaysAttendance, onSave }) => {
+  attendance: AttendanceData;
+  onSave: (statuses: Record<string, AttendanceStatus>, date: string) => void;
+}> = ({ members, attendance, onSave }) => {
   const [searchTerm, setSearchTerm] = useState('');
+  const [selectedDate, setSelectedDate] = useState(new Date());
+  const [displayDate, setDisplayDate] = useState(new Date());
+  const [currentTime, setCurrentTime] = useState(new Date());
+  const dateInputRef = useRef<HTMLInputElement>(null);
 
-  const formattedDate = new Date().toLocaleDateString(undefined, {
-    weekday: 'long',
-    year: 'numeric',
-    month: 'long',
-    day: 'numeric',
-  });
+  useEffect(() => {
+    const timerId = setInterval(() => setCurrentTime(new Date()), 60000); // Update time every minute
+    return () => clearInterval(timerId);
+  }, []);
+
+  const today = useMemo(() => {
+    const d = new Date();
+    d.setHours(23, 59, 59, 999); // Set to end of today for comparisons
+    return d;
+  }, []);
+  
+  const todayString = useMemo(() => new Date().toISOString().split('T')[0], []);
+  const selectedDateString = useMemo(() => selectedDate.toISOString().split('T')[0], [selectedDate]);
+  
+  const weekDays = useMemo(() => {
+    const start = getWeekStartDate(displayDate);
+    return Array.from({ length: 7 }).map((_, i) => addDays(start, i));
+  }, [displayDate]);
+
+  const attendanceForSelectedDate = useMemo(() => {
+    const attendanceForDate: Record<string, AttendanceStatus> = {};
+    members.forEach(member => {
+      const status = attendance[member.id]?.[selectedDateString];
+      if (status) {
+        attendanceForDate[member.id] = status;
+      }
+    });
+    return attendanceForDate;
+  }, [attendance, members, selectedDateString]);
 
   const sortedAndFilteredMembers = useMemo(() => {
     return [...members]
@@ -23,45 +65,113 @@ export const DailyAttendance: React.FC<{
         member.name.toLowerCase().includes(searchTerm.toLowerCase())
       );
   }, [members, searchTerm]);
+  
+  const handleDateSelect = (date: Date) => {
+    if (date > today) return;
+    setSelectedDate(date);
+  };
+  
+  const handleDateInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (!e.target.value) return;
+    const [year, month, day] = e.target.value.split('-').map(Number);
+    const newDate = new Date(year, month - 1, day);
+    setSelectedDate(newDate);
+    setDisplayDate(newDate);
+  };
+
+  const handlePrevWeek = () => {
+    setDisplayDate(prev => addDays(prev, -7));
+  };
+  
+  const handleNextWeek = () => {
+    const nextWeekStartDate = getWeekStartDate(addDays(displayDate, 7));
+    if (nextWeekStartDate > today) return; // Prevent navigating to a future week
+    setDisplayDate(prev => addDays(prev, 7));
+  };
+
+  const triggerDateInput = () => {
+    dateInputRef.current?.showPicker();
+  };
 
   const handleTogglePresentAbsent = (memberId: string) => {
-    const currentStatus = todaysAttendance[memberId];
-    // If currently present, mark as absent. Otherwise, mark as present.
-    // This handles toggling from Absent/HalfDay to Present, and Present to Absent.
+    const currentStatus = attendanceForSelectedDate[memberId];
     const newStatus =
       currentStatus === AttendanceStatus.Present
         ? AttendanceStatus.Absent
         : AttendanceStatus.Present;
-    onSave({ [memberId]: newStatus });
+    onSave({ [memberId]: newStatus }, selectedDateString);
   };
 
   const handleMarkHalfDay = (memberId: string) => {
-    const currentStatus = todaysAttendance[memberId];
-    // Avoid re-saving if the status is already half-day
+    const currentStatus = attendanceForSelectedDate[memberId];
     if (currentStatus === AttendanceStatus.HalfDay) {
       return;
     }
-    onSave({ [memberId]: AttendanceStatus.HalfDay });
+    onSave({ [memberId]: AttendanceStatus.HalfDay }, selectedDateString);
   };
 
   const markAllPresent = () => {
-    const allPresentBatch = members.reduce((acc, member) => {
-      if (todaysAttendance[member.id] !== AttendanceStatus.Present) {
+    const allPresentBatch = sortedAndFilteredMembers.reduce((acc, member) => {
+      if (attendanceForSelectedDate[member.id] !== AttendanceStatus.Present) {
         acc[member.id] = AttendanceStatus.Present;
       }
       return acc;
     }, {} as Record<string, AttendanceStatus>);
 
     if (Object.keys(allPresentBatch).length > 0) {
-      onSave(allPresentBatch);
+      onSave(allPresentBatch, selectedDateString);
     }
   };
 
   return (
     <div className="p-4">
-      <div className="mb-6 text-center">
-        <p className="text-stone-400 text-sm">Marking attendance for:</p>
-        <h2 className="text-xl font-semibold text-orange-200">{formattedDate}</h2>
+      {/* Custom Calendar UI */}
+      <div className="mb-4 bg-stone-900 p-4 rounded-xl shadow-lg">
+        <div className="flex justify-between items-center mb-4">
+          <button onClick={handlePrevWeek} className="p-2 rounded-full hover:bg-stone-800 transition-colors">
+            <Icon type="back" className="w-5 h-5 text-stone-300 transform rotate-180" />
+          </button>
+          <h3 className="font-semibold text-lg text-stone-100">
+            {displayDate.toLocaleDateString(undefined, { month: 'long', year: 'numeric' })}
+          </h3>
+          <button onClick={handleNextWeek} disabled={getWeekStartDate(addDays(displayDate, 7)) > today} className="p-2 rounded-full hover:bg-stone-800 transition-colors disabled:opacity-50 disabled:cursor-not-allowed">
+            <Icon type="back" className="w-5 h-5 text-stone-300" />
+          </button>
+        </div>
+        <div className="flex justify-around">
+          {weekDays.map(day => {
+            const dayString = day.toISOString().split('T')[0];
+            const isSelected = dayString === selectedDateString;
+            const isToday = dayString === todayString;
+            const isFuture = day > today;
+
+            return (
+              <div
+                key={dayString}
+                onClick={() => handleDateSelect(day)}
+                className={`flex flex-col items-center space-y-3 p-1 rounded-lg transition-colors ${isFuture ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer hover:bg-stone-800'}`}
+              >
+                <span className="text-xs font-medium text-stone-400">
+                  {day.toLocaleDateString('en-US', { weekday: 'short' }).toUpperCase().substring(0, 2)}
+                </span>
+                <span className={`w-8 h-8 flex items-center justify-center rounded-full text-sm font-semibold ${
+                  isSelected ? 'bg-white text-stone-950 shadow-lg' : isToday ? 'text-orange-400' : 'text-stone-100'
+                }`}>
+                  {day.getDate()}
+                </span>
+              </div>
+            );
+          })}
+        </div>
+      </div>
+      
+      <div className="mb-6 bg-stone-900 p-3 rounded-xl shadow-lg flex justify-between items-center">
+        <span className="font-semibold text-stone-200">
+          {selectedDate.toLocaleDateString(undefined, { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}
+        </span>
+        <span className="bg-stone-800 text-stone-300 text-sm px-3 py-1 rounded-lg">
+          {currentTime.toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit', hour12: true })}
+        </span>
       </div>
 
       <div className="relative mb-4">
@@ -80,22 +190,21 @@ export const DailyAttendance: React.FC<{
       <div className="flex justify-end items-center mb-4">
         <button
           onClick={markAllPresent}
-          className="bg-orange-600 text-white px-4 py-2 rounded-lg shadow hover:bg-orange-700 transition-colors"
+          disabled={selectedDate > today}
+          className="bg-orange-600 text-white px-4 py-2 rounded-lg shadow hover:bg-orange-700 transition-colors disabled:bg-stone-700 disabled:cursor-not-allowed"
         >
           Mark All Present
         </button>
       </div>
 
       <div className="space-y-3">
-        {sortedAndFilteredMembers.length > 0 ? (
-          sortedAndFilteredMembers.map(member => {
-            const currentStatus = todaysAttendance[member.id] || AttendanceStatus.Absent;
+        {sortedAndFilteredMembers.map(member => {
+            const currentStatus = attendanceForSelectedDate[member.id] || AttendanceStatus.Absent;
             
             const isPresent = currentStatus === AttendanceStatus.Present;
             const isHalfDay = currentStatus === AttendanceStatus.HalfDay;
             const isAbsent = !isPresent && !isHalfDay;
 
-            // Define styles for the Present/Absent toggle button
             let presentToggleClasses = '';
             let presentToggleIcon: 'check' | 'close' = 'check';
 
@@ -107,10 +216,9 @@ export const DailyAttendance: React.FC<{
               presentToggleIcon = 'close';
             } else { // isHalfDay
               presentToggleClasses = 'bg-stone-700 text-stone-100 hover:bg-stone-600 ring-transparent';
-              presentToggleIcon = 'check'; // Represents the 'Present' action, but is inactive
+              presentToggleIcon = 'check';
             }
 
-            // Define styles for the Half Day button
             const halfDayClasses = isHalfDay
               ? 'bg-orange-500 text-white ring-orange-300'
               : 'bg-stone-700 text-stone-100 hover:bg-stone-600 ring-transparent';
@@ -128,6 +236,7 @@ export const DailyAttendance: React.FC<{
                     onClick={() => handleTogglePresentAbsent(member.id)}
                     className={`${baseButtonClasses} ${presentToggleClasses}`}
                     aria-label={isPresent ? "Mark as Absent" : "Mark as Present"}
+                    disabled={selectedDate > today}
                   >
                     <Icon type={presentToggleIcon} className="w-5 h-5" />
                   </button>
@@ -135,23 +244,32 @@ export const DailyAttendance: React.FC<{
                     onClick={() => handleMarkHalfDay(member.id)}
                     className={`${baseButtonClasses} ${halfDayClasses}`}
                     aria-label="Mark as Half Day"
+                    disabled={selectedDate > today}
                   >
                     <Icon type="halfday" className="w-5 h-5" />
                   </button>
                 </div>
               </div>
             );
-          })
-        ) : (
-          <div className="text-center py-8 bg-stone-900 rounded-lg">
-            {searchTerm ? (
-              <p className="text-stone-400">No members found matching "{searchTerm}".</p>
-            ) : (
-              <p className="text-stone-400">No members to display.</p>
-            )}
-          </div>
-        )}
+        })}
       </div>
+      
+      <button
+        onClick={triggerDateInput}
+        className="fixed bottom-20 right-4 w-14 h-14 bg-white text-stone-950 rounded-full shadow-lg flex items-center justify-center z-50 hover:bg-stone-200 active:bg-stone-300 transition-colors"
+        aria-label="Open calendar"
+      >
+        <Icon type="calendar" className="w-7 h-7" />
+      </button>
+      
+      <input
+        type="date"
+        ref={dateInputRef}
+        value={selectedDateString}
+        onChange={handleDateInputChange}
+        max={todayString}
+        className="opacity-0 w-0 h-0 absolute"
+      />
     </div>
   );
 };
