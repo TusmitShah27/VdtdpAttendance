@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import firebase from 'firebase/compat/app';
 import { useMembers } from './hooks/useWorkers';
-import { View, AttendanceStatus } from '../types';
+import { View } from '../types';
 import { Dashboard } from './components/Dashboard';
 import { DailyAttendance } from './components/DailyAttendance';
 import { AddMemberForm } from './components/AddWorkerForm';
@@ -13,7 +13,7 @@ import { auth } from './services/firebase';
 import { Icon } from './components/Icon';
 
 
-const getTodayDateString = () => new Date().toISOString().split('T')[0];
+// const getTodayDateString = () => new Date().toISOString().split('T')[0];
 
 export default function App() {
   const [user, setUser] = useState<firebase.User | null>();

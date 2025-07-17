@@ -110,16 +110,18 @@ export const DailyAttendance: React.FC<{
     onSave({ [memberId]: AttendanceStatus.HalfDay }, selectedDateString);
   };
 
-  const markAllPresent = () => {
-    const allPresentBatch = sortedAndFilteredMembers.reduce((acc, member) => {
-      if (attendanceForSelectedDate[member.id] !== AttendanceStatus.Present) {
-        acc[member.id] = AttendanceStatus.Present;
+  const markAllAbsent = () => {
+    const allAbsentBatch = sortedAndFilteredMembers.reduce((acc, member) => {
+      const currentStatus = attendanceForSelectedDate[member.id];
+      // Only mark as absent if they are currently present or on half-day
+      if (currentStatus === AttendanceStatus.Present || currentStatus === AttendanceStatus.HalfDay) {
+        acc[member.id] = AttendanceStatus.Absent;
       }
       return acc;
     }, {} as Record<string, AttendanceStatus>);
 
-    if (Object.keys(allPresentBatch).length > 0) {
-      onSave(allPresentBatch, selectedDateString);
+    if (Object.keys(allAbsentBatch).length > 0) {
+      onSave(allAbsentBatch, selectedDateString);
     }
   };
 
@@ -167,7 +169,7 @@ export const DailyAttendance: React.FC<{
       
       <div className="mb-6 bg-stone-900 p-3 rounded-xl shadow-lg flex justify-between items-center">
         <span className="font-semibold text-stone-200">
-          {selectedDate.toLocaleDateString(undefined, { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}
+          {selectedDate.toLocaleDateString(undefined, { weekday: 'long', day: 'numeric', month: 'long' })}
         </span>
         <span className="bg-stone-800 text-stone-300 text-sm px-3 py-1 rounded-lg">
           {currentTime.toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit', hour12: true })}
@@ -189,11 +191,11 @@ export const DailyAttendance: React.FC<{
 
       <div className="flex justify-end items-center mb-4">
         <button
-          onClick={markAllPresent}
+          onClick={markAllAbsent}
           disabled={selectedDate > today}
-          className="bg-orange-600 text-white px-4 py-2 rounded-lg shadow hover:bg-orange-700 transition-colors disabled:bg-stone-700 disabled:cursor-not-allowed"
+          className="bg-red-600 text-white px-4 py-2 rounded-lg shadow hover:bg-red-700 transition-colors disabled:bg-stone-700 disabled:cursor-not-allowed"
         >
-          Mark All Present
+          Mark All Absent
         </button>
       </div>
 
