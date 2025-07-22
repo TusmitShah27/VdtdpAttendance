@@ -106,6 +106,24 @@ export const useMembers = () => {
     await memberRef.update({ name, instrument });
   }, []);
 
+    const deleteMember = useCallback(async (memberId: string) => {
+    // 1. Delete the member document
+    const memberRef = db.collection('members').doc(memberId);
+    await memberRef.delete();
+
+    // 2. Delete all attendance records for that member
+    const attendanceQuery = db.collection('attendance').where('memberId', '==', memberId);
+    const attendanceSnapshot = await attendanceQuery.get();
+    
+    if (!attendanceSnapshot.empty) {
+        const batch = db.batch();
+        attendanceSnapshot.docs.forEach(doc => {
+            batch.delete(doc.ref);
+        });
+        await batch.commit();
+    }
+  }, []);
+
   const markAttendanceForDate = useCallback(async (statuses: Record<string, AttendanceStatus>, date: string) => {
     const attendanceColRef = db.collection('attendance');
     const batch = db.batch();
@@ -224,6 +242,7 @@ export const useMembers = () => {
     addMember,
     addMultipleMembers,
     updateMember,
+    deleteMember,
     markAttendanceForDate,
     getMemberById,
     getAttendanceByMember,

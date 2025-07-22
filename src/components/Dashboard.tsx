@@ -1,3 +1,4 @@
+
 import React, { useState, useMemo } from 'react';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import { Icon } from './Icon';
@@ -16,8 +17,9 @@ interface DashboardProps {
   onSelectMember: (memberId: string) => void;
   loading: boolean;
   onGenerateReport: (days: number) => string;
-  installPromptEvent?: any;
+  installPromptEvent: any;
   onInstall: () => void;
+  onDeleteMember: (memberId: string) => Promise<void>;
 }
 
 const StatCard: React.FC<{ title: string; value: string | number; iconType: 'check' | 'close' | 'halfday' | 'member'; color: string }> = ({ title, value, iconType, color }) => (
@@ -32,17 +34,17 @@ const StatCard: React.FC<{ title: string; value: string | number; iconType: 'che
   </div>
 );
 
-export const Dashboard: React.FC<DashboardProps> = ({ todaySummary, weeklySummary, onLogout, members, onSelectMember, loading, onGenerateReport, installPromptEvent, onInstall }) => {
+export const Dashboard: React.FC<DashboardProps> = ({ todaySummary, weeklySummary, onLogout, members, onSelectMember, loading, onGenerateReport, installPromptEvent, onInstall, onDeleteMember }) => {
   const [searchTerm, setSearchTerm] = useState('');
 
-  const sortedMembers = useMemo(() => {
-    return [...members].sort((a, b) => a.name.localeCompare(b.name));
-  }, [members]);
-
-  const filteredMembers = sortedMembers.filter(member =>
-    member.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    member.instrument.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  const filteredMembers = useMemo(() => {
+    return [...members]
+        .sort((a, b) => a.name.localeCompare(b.name))
+        .filter(member =>
+            member.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+            member.instrument.toLowerCase().includes(searchTerm.toLowerCase())
+        );
+  }, [members, searchTerm]);
 
   const COLORS = {
     [AttendanceStatus.Present]: '#22c55e', // green-500
@@ -68,6 +70,16 @@ export const Dashboard: React.FC<DashboardProps> = ({ todaySummary, weeklySummar
       : `monthly-attendance-report-${new Date().toISOString().split('T')[0]}.csv`;
     const csvData = onGenerateReport(days);
     downloadCsv(csvData, filename);
+  };
+
+  const handleDeleteClick = (e: React.MouseEvent, memberId: string, memberName: string) => {
+    e.stopPropagation(); // Prevent navigating to member details
+    if (window.confirm(`Are you sure you want to delete ${memberName}? This action cannot be undone and will remove all their attendance records.`)) {
+        onDeleteMember(memberId).catch(err => {
+            console.error("Failed to delete member:", err);
+            alert("An error occurred while deleting the member.");
+        });
+    }
   };
 
   if (loading) {
@@ -176,15 +188,22 @@ export const Dashboard: React.FC<DashboardProps> = ({ todaySummary, weeklySummar
             {filteredMembers.length > 0 ? (
                 filteredMembers.map(member => (
                   <div key={member.id} onClick={() => onSelectMember(member.id)} className="bg-stone-900 p-4 rounded-lg flex items-center justify-between shadow cursor-pointer hover:bg-stone-800 transition-colors">
-                    <div className="flex items-center">
-                        <div className="bg-stone-700 p-2 rounded-full mr-4">
+                    <div className="flex items-center overflow-hidden mr-2">
+                        <div className="bg-stone-700 p-2 rounded-full mr-4 flex-shrink-0">
                             <Icon type="member" className="w-6 h-6 text-stone-300" />
                         </div>
                         <div>
-                          <p className="font-semibold text-stone-100">{member.name}</p>
-                          <p className="text-sm text-stone-400">{member.instrument}</p>
+                          <p className="font-semibold text-stone-100 truncate">{member.name}</p>
+                          <p className="text-sm text-stone-400 truncate">{member.instrument}</p>
                         </div>
                     </div>
+                    <button 
+                        onClick={(e) => handleDeleteClick(e, member.id, member.name)} 
+                        className="p-2 ml-2 rounded-full text-stone-400 hover:bg-red-900/50 hover:text-red-400 transition-colors flex-shrink-0"
+                        aria-label={`Delete ${member.name}`}
+                      >
+                        <Icon type="delete" className="w-5 h-5" />
+                      </button>
                   </div>
                 ))
             ) : (

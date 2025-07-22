@@ -28,6 +28,7 @@ export default function App() {
     addMember,
     addMultipleMembers,
     updateMember,
+    deleteMember,
     markAttendanceForDate,
     getMemberById,
     getAttendanceByMember,
@@ -120,6 +121,7 @@ export default function App() {
             onGenerateReport={generateCsvReport}
             installPromptEvent={installPromptEvent}
             onInstall={handleInstallPrompt}
+            onDeleteMember={deleteMember}
           />
         );
       case View.Attendance:
